@@ -8,7 +8,7 @@ using Vodovoz_test.SupportingClasses;
 
 namespace Vodovoz_test.ViewModel
 {
-    class EmpVM : MainVM
+    class EmployeersVM : MainVM
     {
         private int empPrimaryKey;
         private string _firstName = String.Empty;
@@ -126,7 +126,7 @@ namespace Vodovoz_test.ViewModel
         #endregion
 
 
-        public EmpVM()
+        public EmployeersVM()
         {
             EmpSaveButtonCommand = new LambdaCommand(OnEmpSaveButtonCommandExecuted, CanEmpSaveButtonCommandExecute);
             EmpSelectedInDataGrid = new LambdaCommand(OnEmpSelectedInDataGridExecuted, CanEmpSelectedInDataGridExecute);

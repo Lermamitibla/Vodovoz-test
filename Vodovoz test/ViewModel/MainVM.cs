@@ -9,15 +9,7 @@ namespace Vodovoz_test.ViewModel
 {
     class MainVM : BaseVM
     {
-
-        public static event PropertyChangedEventHandler StaticPropertyChanged;
-
-        internal static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public string SaveButtonContent { get { return _saveButtonContent; } protected set { if (!_saveButtonContent.Equals(value)) _saveButtonContent = value; OnPropertyChanged(); } }
+        
         protected static int selectedDepId;
 
         protected string _saveButtonContent = "Сохранить";
@@ -25,6 +17,7 @@ namespace Vodovoz_test.ViewModel
         protected static ObservableCollection<DepWithManagerName> _allDepWithManagerName;
         private static VodovozTESTEntities _dbContext = new VodovozTESTEntities();
         protected static ObservableCollection<EmployeerOfTheDep> _allEmpOfSelectedDep;
+        public static event PropertyChangedEventHandler StaticPropertyChanged;
 
         static MainVM()
         {
@@ -39,25 +32,25 @@ namespace Vodovoz_test.ViewModel
             set { if (!_allEmployeesWithDepNam.Equals(value)) _allEmployeesWithDepNam = value; 
                 OnStaticPropertyChanged(); }
         }
-
         public static ObservableCollection<DepWithManagerName> AllDepWithManagerName
         {
             get { return _allDepWithManagerName; }
             set {  _allDepWithManagerName = value; OnStaticPropertyChanged(); }
         }
+        public string SaveButtonContent { get { return _saveButtonContent; } protected set { if (!_saveButtonContent.Equals(value)) _saveButtonContent = value; OnPropertyChanged(); } }
 
-        protected static void UpdateEmpListForSelectedDep (int depId)
+        internal static void OnStaticPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            selectedDepId = depId;
-            AllEmpOfSelectedDep = GetEmpListFromSelectedDep(selectedDepId);
+            StaticPropertyChanged?.Invoke(null, new PropertyChangedEventArgs(propertyName));
         }
-
-        /// <summary>
-        /// Обновляет список сотрудников выбранного отдела если он выбран
-        /// </summary>
         protected static void UpdateEmpListForSelectedDep()
         {
             if (selectedDepId != 0) UpdateEmpListForSelectedDep(selectedDepId);
+        }
+        protected static void UpdateEmpListForSelectedDep(int depId)
+        {
+            selectedDepId = depId;
+            AllEmpOfSelectedDep = GetEmpListFromSelectedDep(selectedDepId);
         }
 
         private static ObservableCollection<EmployeerOfTheDep> GetEmpListFromSelectedDep(int depID)

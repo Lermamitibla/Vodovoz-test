@@ -11,9 +11,10 @@
         Title="Тестовое по ORM/MVVM/WPF" Height="450" Width="800" ResizeMode="NoResize">
     <Grid>
         <TabControl HorizontalAlignment="Left" Height="409" VerticalAlignment="Top" Width="782" Grid.ColumnSpan="2">
+            
             <TabItem Header="Сотрудники">
                 <TabItem.DataContext>
-                    <vm:EmpVM/>
+                    <vm:EmployeersVM/>
                 </TabItem.DataContext>
                 <Grid Background="#FFE5E5E5" Margin="-1,-1,-11,-15">
                     <Label Content="Имя" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,32,0,0" Width="99" Height="29"/>
@@ -53,9 +54,10 @@
                 </Grid>
             </TabItem>
 
+        
             <TabItem Header="Подразделения" Margin="0,0,-4,-2" >
                 <TabItem.DataContext>
-                    <vm:DepVM/>
+                    <vm:DepartmentsVM/>
                 </TabItem.DataContext>
                 <Grid Background="#FFE5E5E5" Margin="0,-25,-13,-10">
                     <Label Content="Подразделение" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="17,59,0,0" Width="99" Height="29"/>
@@ -75,7 +77,6 @@
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="SelectionChanged">
                                 <i:InvokeCommandAction Command ="{Binding DepSelectedInDataGrid}" CommandParameter="{Binding ElementName=depGridView, Path=SelectedItem}" >
-
                                 </i:InvokeCommandAction>
                             </i:EventTrigger>
                         </i:Interaction.Triggers>

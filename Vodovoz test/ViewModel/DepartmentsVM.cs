@@ -7,7 +7,7 @@ using System.Windows;
 
 namespace Vodovoz_test.ViewModel
 {
-    class DepVM : MainVM
+    class DepartmentsVM : MainVM
     {
         private string _depName = String.Empty;
         private int _depManagerID;
@@ -15,7 +15,7 @@ namespace Vodovoz_test.ViewModel
         private bool isSelectedManagerAreValid;
         private DepWithManagerName selectedDep;
 
-        public DepVM()
+        public DepartmentsVM()
         {
             DeptSaveButtonCommand = new LambdaCommand(OnDeptSaveButtonCommandExecuted, CanDeptSaveButtonCommandExecute);
             DepSelectedInDataGrid = new LambdaCommand(OnDepSelectedInDataGridExecuted, CanDepSelectedInDataGridExecute);
