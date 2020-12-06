@@ -1,0 +1,87 @@
+﻿<Window x:Class="Vodovoz_test.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Vodovoz_test.ViewModel"
+        xmlns:model="clr-namespace:Vodovoz_test.Model"
+        xmlns:suppClasses="clr-namespace:Vodovoz_test.SupportingClasses"
+        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+        mc:Ignorable="d"
+        Title="Тестовое по ORM/MVVM/WPF" Height="450" Width="800" ResizeMode="NoResize">
+    <Grid>
+        <TabControl HorizontalAlignment="Left" Height="409" VerticalAlignment="Top" Width="782" Grid.ColumnSpan="2">
+            <TabItem Header="Сотрудники">
+                <TabItem.DataContext>
+                    <vm:EmpVM/>
+                </TabItem.DataContext>
+                <Grid Background="#FFE5E5E5" Margin="-1,-1,-11,-15">
+                    <Label Content="Имя" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,32,0,0" Width="99" Height="29"/>
+                    <TextBox x:Name="firstNameTxtBlock" Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="29" Margin="122,32,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="137" MaxLength="15"/>
+                    <Label Content="Фамилия" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,70,0,0" RenderTransformOrigin="0.461,1.969" Width="99" Height="29" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="secondNameTxtBlock" Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="29" Margin="122,70,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="137" MaxLength="15"/>
+                    <Label Content="Отчество" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,114,0,0" RenderTransformOrigin="0.461,1.969" Width="99" Height="29" Grid.ColumnSpan="2"/>
+                    <TextBox x:Name="patronymicTxtBlock" Text="{Binding Patronymic, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="29" Margin="122,114,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="137" MaxLength="15"/>
+                    <Label Content="Пол" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,156,0,0" RenderTransformOrigin="0.461,1.969" Width="99" Grid.ColumnSpan="2"/>
+                    <ComboBox x:Name="genderComboBox" ItemsSource="{suppClasses:EnumBindingSource model:Gender}" SelectedItem="{Binding EmpGender, UpdateSourceTrigger=PropertyChanged}"  HorizontalAlignment="Left" Margin="122,156,0,0" VerticalAlignment="Top" Width="137" Height="26" />
+                    <Label Content="Дата рождения" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,198,0,0" RenderTransformOrigin="0.461,1.969" Width="99" Height="29" Grid.ColumnSpan="2"/>
+                    <DatePicker HorizontalAlignment="Left" Margin="122,199,0,0" VerticalAlignment="Top" SelectedDate="{Binding BirthDate}" SelectedDateFormat="Short" DisplayDateStart="1900/01/01" DisplayDateEnd="2020/01/01" />
+                    <Label Content="Подразделение" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,243,0,0" RenderTransformOrigin="0.461,1.969" Width="99" Grid.ColumnSpan="2"/>
+                    <ComboBox x:Name="deptComboBox" HorizontalAlignment="Left" Margin="122,243,0,0" VerticalAlignment="Top" Width="137" Height="26" ItemsSource="{Binding ElementName=depGridView, Path=DataContext.AllDepWithManagerName}" DisplayMemberPath="depName" SelectedItem="{Binding SelectedDept}"/>
+                    <Button x:Name="saveButtonEmp" Command="{Binding EmpSaveButtonCommand}" Content="{Binding SaveButtonContent}" HorizontalAlignment="Left" Margin="27,314,0,0" VerticalAlignment="Top" Width="75"/>
+                    <Button x:Name="delButtonEmp" Command="{Binding DeleteButtonCommand}" Content="Удалить" HorizontalAlignment="Left" Margin="107,314,0,63" Width="75"/>
+                    <Button x:Name="CancelButtonEmp" Content="Отмена" Command="{Binding CancelButtonCommand}" HorizontalAlignment="Left" Margin="187,314,0,63" Width="75"/>
+
+                    <DataGrid x:Name="empGridView" HorizontalAlignment="Left" Height="356" Margin="289,18,0,0" VerticalAlignment="Top" Width="474"  ItemsSource="{Binding AllEmployeesWithDepName}" Uid="" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:Name="empid" Header="Номер раба" Binding="{Binding empid}" Visibility="Hidden"/>
+                            <DataGridTextColumn x:Name="firstname" Header="Имя" Binding="{Binding firstname}" />
+                            <DataGridTextColumn x:Name="lastname" Header="Фамилия" Binding="{Binding lastname}" />
+                            <DataGridTextColumn x:Name="patronymic" Header="Отчество" Binding="{Binding patronymic}" />
+                            <DataGridTextColumn x:Name="gender" Header="Пол" Binding="{Binding gender}" />
+                            <DataGridTextColumn x:Name="dateOfBirth" Header="Дата рождения" Binding="{Binding dateOfBirth, StringFormat=dd.MM.yyyy}" />
+                            <DataGridTextColumn x:Name="depID_" Header="Подразделение" Binding="{Binding deptname}" />
+                        </DataGrid.Columns>
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="SelectionChanged">
+                                <i:InvokeCommandAction Command ="{Binding EmpSelectedInDataGrid}" CommandParameter="{Binding ElementName=empGridView, Path=SelectedItem}" >
+
+                                </i:InvokeCommandAction>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Подразделения" Margin="0,0,-4,-2" >
+                <TabItem.DataContext>
+                    <vm:DepVM/>
+                </TabItem.DataContext>
+                <Grid Background="#FFE5E5E5" Margin="0,-25,-13,-10">
+                    <Label Content="Подразделение" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="17,59,0,0" Width="99" Height="29"/>
+                    <TextBox HorizontalAlignment="Left" Height="29" Margin="123,59,0,0" TextWrapping="Wrap" Text="{Binding DepName}" VerticalAlignment="Top" Width="137" MaxLength="15"/>
+                    <Button x:Name="SaveButtonDept" Command="{Binding  DeptSaveButtonCommand}" Content="{Binding SaveButtonContent}" HorizontalAlignment="Left" Margin="27,343,0,0" VerticalAlignment="Top" Width="75"/>
+                    <Button x:Name="DelButtonDept" Content="Удалить" Command="{Binding DepRemoveCommand}" HorizontalAlignment="Left" Margin="107,343,0,0" VerticalAlignment="Top" Width="75"/>
+                    <Button x:Name="CancelButtonDept" Content="Отмена" Command="{Binding DepCancelButtonCommand }" HorizontalAlignment="Left" Margin="187,343,0,53" Width="75"/>
+                    <Label Content="Руководитель" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="17,105,0,0" RenderTransformOrigin="0.461,1.969" Width="99"/>
+                    <Button x:Name="RemoveFromPostButton" Content="Снять с должности" Command="{Binding DepRemoveManagerCommand}" HorizontalAlignment="Left" Margin="123,136,0,0" VerticalAlignment="Top" Width="116"/>
+                    <ComboBox x:Name="EmployeersOfTheDep" HorizontalAlignment="Left" Margin="123,105,0,0" VerticalAlignment="Top" Width="137" Height="26" ItemsSource="{Binding AllEmpOfSelectedDep}" DisplayMemberPath="fullName" SelectedItem="{Binding ManagerOfSelectedDep}"/>
+                    <DataGrid x:Name="depGridView" HorizontalAlignment="Left" Height="354" Margin="285,39,0,0" VerticalAlignment="Top" Width="474" ItemsSource="{Binding AllDepWithManagerName}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:Name="depID" Header="Номер" Binding="{Binding depID}"/>
+                            <DataGridTextColumn x:Name="depName" Header="Подразделение" Binding="{Binding depName}"/>
+                            <DataGridTextColumn x:Name="managerID" Header="Руководитель" Binding="{Binding managerfullname}"/>
+                        </DataGrid.Columns>
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="SelectionChanged">
+                                <i:InvokeCommandAction Command ="{Binding DepSelectedInDataGrid}" CommandParameter="{Binding ElementName=depGridView, Path=SelectedItem}" >
+
+                                </i:InvokeCommandAction>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
