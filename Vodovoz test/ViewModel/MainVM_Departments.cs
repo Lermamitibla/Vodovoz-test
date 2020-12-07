@@ -10,42 +10,46 @@ namespace Vodovoz_test.ViewModel
 {
     partial class MainVM : BaseVM
     {
-        private string _depName = String.Empty;
-        private int _depManagerID;
-        private EmployeerOfTheDep _managerOfSelectedDep;
-        private bool isSelectedManagerAreValid;
+        private string _departmentName = String.Empty;
+        private int departmentManagerID;
+        private EmployeerOfTheDep _managerOfSelectedDepartment;
+        private bool isSelectedEmployeeAreManager;
         private DepWithManagerName selectedDep;
         private int selectedDepId;
-        private SaveButtonStatus _departmentSaveButtonStatus = SaveButtonStatus.Сохранить;
+        private SaveButtonStatus _departmentSaveButtonStatus;
+        protected ObservableCollection<DepWithManagerName> _allDepartmentsWithManagerName;
+        private bool IsExistingDepartment;
+        private ObservableCollection<EmployeerOfTheDep> _allEmpOfSelectedDep;
 
-        protected ObservableCollection<DepWithManagerName> _allDepWithManagerName;
-
-
-
-        public string DepName { get { return _depName; } set { if (!_depName.Equals(value)) _depName = value; OnPropertyChanged(); } }
-        public EmployeerOfTheDep ManagerOfSelectedDep 
+        public string DepartmentName { 
+            get { return _departmentName; } 
+            set { if (!_departmentName.Equals(value)) _departmentName = value; OnPropertyChanged(); } 
+        }
+        public EmployeerOfTheDep ManagerOfSelectedDepartment 
         { 
-            get { return _managerOfSelectedDep; } 
+            get { return _managerOfSelectedDepartment; } 
             set 
             {
-                /*if(!_managerOfSelectedDep.Equals(value)) */
-                if (value != null)
-                {
-                    if (value.empid == _depManagerID) isSelectedManagerAreValid = true;
-                    else isSelectedManagerAreValid = false;
-                }
-                else isSelectedManagerAreValid = false;
-                _managerOfSelectedDep = value;
+                if (value != null)  CheckIfSelectedEmployeeAreManager(value.empid);
+                _managerOfSelectedDepartment = value;
                 OnPropertyChanged();
             } 
-        } //была ошибка со ссылкой на нул при переключении на отдел без менеджера, помогло удаление проверки Equals
-
-        public ObservableCollection<DepWithManagerName> AllDepWithManagerName
-        {
-            get { return _allDepWithManagerName; }
-            set { _allDepWithManagerName = value; OnPropertyChanged(); }
         }
-        public SaveButtonStatus DepartmentSaveButtonStatus { get { return _employyerSaveButtonStatus; } set { if (!_firstName.Equals(value)) _employyerSaveButtonStatus = value; OnPropertyChanged(); } }
+        public ObservableCollection<DepWithManagerName> AllDepartmentsWithManagerName
+        {
+            get { return _allDepartmentsWithManagerName; }
+            set { _allDepartmentsWithManagerName = value; OnPropertyChanged(); }
+        }
+        public SaveButtonStatus DepartmentSaveButtonStatus 
+        { 
+            get { return _departmentSaveButtonStatus; } 
+            set { if (!_firstName.Equals(value)) _departmentSaveButtonStatus = value; OnPropertyChanged(); } 
+        }
+        public ObservableCollection<EmployeerOfTheDep> AllEmpOfSelectedDep
+        {
+            get { return _allEmpOfSelectedDep; }
+            set { _allEmpOfSelectedDep = value; OnPropertyChanged(); }
+        }
 
         #region Команды и их методы
         public ICommand DeptSaveButtonCommand { get; private set; }
@@ -54,13 +58,12 @@ namespace Vodovoz_test.ViewModel
         public ICommand DepRemoveManagerCommand { get; private set; }
         public ICommand DepRemoveCommand { get; private set; }
 
-
         private void OnDeptSaveButtonCommandExecuted(object p)
         {
             if (CheckPropertiesBeforeCreateOrUpdate()) 
             {
-                if (selectedDepId == 0) SaveNewDep();
-                else UpdateDep();
+                if (IsExistingDepartment) UpdateDep();
+                else SaveNewDep();
             }
         }
         private bool CanDeptSaveButtonCommandExecute(object p) => true;
@@ -70,39 +73,26 @@ namespace Vodovoz_test.ViewModel
             if (p != null)
             {
                 selectedDep = (DepWithManagerName)p;
-                selectedDepId = selectedDep.depID;
-                UpdateEmpListForSelectedDep(selectedDepId);
-                
-                if (selectedDep.managerID != null)
-                {
-                    _depManagerID = (int)selectedDep.managerID;
-                    ManagerOfSelectedDep = GetManagerOfTheSelectedDep(_depManagerID);
-                }
-                else _depManagerID = 0;
+                SetChoosenDepartmentProperties();
 
-                DepartmentSaveButtonStatus = SaveButtonStatus.Сохранить;
-                DepName = selectedDep.depName;
+                DepartmentSaveButtonStatus = SaveButtonStatus.Изменить;
             }
         }
         private bool CanDepSelectedInDataGridExecute(object p) => true;
 
         private void OnDepCancelButtonExecuted(object p)
         {
-            selectedDepId = 0;
-            AllEmpOfSelectedDep = null;
-            ManagerOfSelectedDep = null;
-            DepName = String.Empty;
+            CleanDepartmentProperties();
         }
         private bool CanDepCancelButtonExecute(object p) => true;
 
-        private void OnDepRemoveManagerCommandExecuted(object p)
-        {
-            if (ManagerOfSelectedDep == null || !isSelectedManagerAreValid) MessageBox.Show("У отдела нет руководителя");
-            else RemoveManager();
+        private void OnDepRemoveManagerCommandExecuted(object p)  //проверить
+        { 
+            RemoveManager();
         }
         private bool CanDepRemoveManagerCommandExecute(object p)
         {
-            if (isSelectedManagerAreValid) return true;
+            if (isSelectedEmployeeAreManager) return true;
             else return false;
         }
 
@@ -110,7 +100,7 @@ namespace Vodovoz_test.ViewModel
         {
             bool IsEverythingAllright = true;
 
-            if (_depManagerID != 0) 
+            if (departmentManagerID != 0) 
             {
                 MessageBox.Show("Перед удалением отдела нужно сместить руководителя");
                 IsEverythingAllright = false;
@@ -126,81 +116,61 @@ namespace Vodovoz_test.ViewModel
         }
         private bool CanDepRemoveCommandExecute(object p)
         {
-            if (AllDepWithManagerName.Count == 0 || selectedDep == null || selectedDepId == 0) return false;
+            if (AllDepartmentsWithManagerName.Count == 0 || selectedDep == null || selectedDepId == 0) return false;
             else return true;
         }
         #endregion
 
         private void SaveNewDep()
         {
-            dbContext.Departments.Add(new Departments(_depName));
+            dbContext.Departments.Add(new Departments(_departmentName));
             dbContext.SaveChanges();
 
-            DownloadDataForDepartmentsDataGrid();
-            CancellProperties();
-            MessageBox.Show("Депортамент создан");
+            UpdateDataAndCleanProperties();
         }
         private void UpdateDep()
         {
             var entity = dbContext.Departments.Find(selectedDepId);
-            entity.depName = DepName;
-            if (_depManagerID == 0 && ManagerOfSelectedDep != null) entity.managerID = _managerOfSelectedDep.empid;
+            entity.depName = DepartmentName;
+            if (departmentManagerID == 0 && ManagerOfSelectedDepartment != null) entity.managerID = _managerOfSelectedDepartment.empid;
             dbContext.SaveChanges();
 
-            DownloadDataForDepartmentsDataGrid();
-            DownloadDataForEmploeersDataGrid();
-            CancellProperties();
+            UpdateDataAndCleanProperties();
         }        
-        private EmployeerOfTheDep GetManagerOfTheSelectedDep(int managerID)
-        {
-            EmployeerOfTheDep result = null;
-            foreach (var emp in AllEmpOfSelectedDep)
-            {
-                if (emp.empid == managerID) result = emp;
-            }
-            return result;
-        }
+
         private void RemoveManager()
         {
             var dep = dbContext.Departments.Find(selectedDepId);
             dep.managerID = null;
             dbContext.SaveChanges();
-
-            ManagerOfSelectedDep = null;
-            CancellProperties();
-            DownloadDataForDepartmentsDataGrid();
-            // MessageBox.Show("Руководитель смещен");
+            UpdateDataAndCleanProperties();
         }
         private void RemoveDepartment()
         {
             dbContext.Departments.Remove(dbContext.Departments.Find(selectedDepId));
             dbContext.SaveChanges();
-
-            DownloadDataForDepartmentsDataGrid();
-            DownloadDataForEmploeersDataGrid();
-            CancellProperties();
-
-            //MessageBox.Show("Отдел удолен");
+            UpdateDataAndCleanProperties();
         }
-        private void CancellProperties()
+
+        private void CleanDepartmentProperties()
         {
-            DepName = String.Empty;
-            ManagerOfSelectedDep = null;
+            DepartmentName = String.Empty;
+            ManagerOfSelectedDepartment = null;
+            isSelectedEmployeeAreManager = false;
+            IsExistingDepartment = false;
             AllEmpOfSelectedDep = null;
             selectedDepId = 0;
-            DepartmentSaveButtonStatus = SaveButtonStatus.Изменить;
+            DepartmentSaveButtonStatus = SaveButtonStatus.Сохранить;
         }
-
         private bool CheckPropertiesBeforeCreateOrUpdate()
         {
-            if (DepName == String.Empty)
+            if (DepartmentName == String.Empty)
             {
                 MessageBox.Show("Необходимо указать название отдела");
                 return false;
             }
             return true;
         }
-
         private void CreateDepartmentsTabComments()
         {
             DeptSaveButtonCommand = new LambdaCommand(OnDeptSaveButtonCommandExecuted, CanDeptSaveButtonCommandExecute);
@@ -209,7 +179,6 @@ namespace Vodovoz_test.ViewModel
             DepRemoveManagerCommand = new LambdaCommand(OnDepRemoveManagerCommandExecuted, CanDepRemoveManagerCommandExecute);
             DepRemoveCommand = new LambdaCommand(OnDepRemoveCommandExecuted, CanDepRemoveCommandExecute);
         }
-
         private void DownloadDataForDepartmentsDataGrid()
         {
             var freshDepWithManagerNameList = new ObservableCollection<DepWithManagerName>();
@@ -223,8 +192,56 @@ namespace Vodovoz_test.ViewModel
                 freshDepWithManagerNameList.Add((DepWithManagerName)a);
             }
 
-            AllDepWithManagerName = freshDepWithManagerNameList;
+            AllDepartmentsWithManagerName = freshDepWithManagerNameList;
         }
+        private void CheckIfSelectedEmployeeAreManager(int empid)
+        {
+            if (empid == departmentManagerID) isSelectedEmployeeAreManager = true;
+            else isSelectedEmployeeAreManager = false;
+        }
+        private void SetChoosenDepartmentProperties()
+        {
+            DepartmentName = selectedDep.depName;
+            IsExistingDepartment = true;
+            selectedDepId = selectedDep.depID;
 
+            UpdateEmpListForSelectedDep(selectedDepId);
+
+            if (selectedDep.managerID != null)
+            {
+                departmentManagerID = (int)selectedDep.managerID;
+                ManagerOfSelectedDepartment = GetManagerOfTheSelectedDep(departmentManagerID);
+            }
+            else departmentManagerID = 0;
+
+            
+        }
+        private EmployeerOfTheDep GetManagerOfTheSelectedDep(int managerID)
+        {
+            EmployeerOfTheDep result = null;
+            foreach (var emp in AllEmpOfSelectedDep)
+            {
+                if (emp.empid == managerID) result = emp;
+            }
+            return result;
+        }
+        private void UpdateEmpListForSelectedDep()
+        {
+            if (selectedDepId != 0) UpdateEmpListForSelectedDep(selectedDepId);
+        }
+        private void UpdateEmpListForSelectedDep(int depId)
+        {
+            selectedDepId = depId;
+            AllEmpOfSelectedDep = GetEmpListFromSelectedDep(selectedDepId);
+        }
+        private ObservableCollection<EmployeerOfTheDep> GetEmpListFromSelectedDep(int depID)
+        {
+            var result = new ObservableCollection<EmployeerOfTheDep>();
+            foreach (var emp in AllEmployeesWithDepName)
+            {
+                if (emp.depID == depID) result.Add(emp);
+            }
+            return result;
+        }
     }
 }
