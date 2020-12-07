@@ -21,6 +21,8 @@ namespace Vodovoz_test.ViewModel
         private bool IsExistingDepartment;
         private ObservableCollection<EmployeerOfTheDep> _allEmpOfSelectedDep;
 
+        //test one two
+
         public string DepartmentName { 
             get { return _departmentName; } 
             set { if (!_departmentName.Equals(value)) _departmentName = value; OnPropertyChanged(); } 
@@ -86,7 +88,7 @@ namespace Vodovoz_test.ViewModel
         }
         private bool CanDepCancelButtonExecute(object p) => true;
 
-        private void OnDepRemoveManagerCommandExecuted(object p)  //проверить
+        private void OnDepRemoveManagerCommandExecuted(object p)
         { 
             RemoveManager();
         }
