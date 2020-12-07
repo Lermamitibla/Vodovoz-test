@@ -4,25 +4,23 @@ using Vodovoz_test.SupportingClasses;
 using Vodovoz_test.Commands;
 using System.Windows.Input;
 using System.Windows;
+using System.Collections.ObjectModel;
 
 namespace Vodovoz_test.ViewModel
 {
-    class DepartmentsVM : MainVM
+    partial class MainVM : BaseVM
     {
         private string _depName = String.Empty;
         private int _depManagerID;
         private EmployeerOfTheDep _managerOfSelectedDep;
         private bool isSelectedManagerAreValid;
         private DepWithManagerName selectedDep;
+        private int selectedDepId;
+        private SaveButtonStatus _departmentSaveButtonStatus = SaveButtonStatus.Сохранить;
 
-        public DepartmentsVM()
-        {
-            DeptSaveButtonCommand = new LambdaCommand(OnDeptSaveButtonCommandExecuted, CanDeptSaveButtonCommandExecute);
-            DepSelectedInDataGrid = new LambdaCommand(OnDepSelectedInDataGridExecuted, CanDepSelectedInDataGridExecute);
-            DepCancelButtonCommand = new LambdaCommand(OnDepCancelButtonExecuted, CanDepCancelButtonExecute);
-            DepRemoveManagerCommand = new LambdaCommand(OnDepRemoveManagerCommandExecuted, CanDepRemoveManagerCommandExecute);
-            DepRemoveCommand = new LambdaCommand(OnDepRemoveCommandExecuted, CanDepRemoveCommandExecute);
-        }
+        protected ObservableCollection<DepWithManagerName> _allDepWithManagerName;
+
+
 
         public string DepName { get { return _depName; } set { if (!_depName.Equals(value)) _depName = value; OnPropertyChanged(); } }
         public EmployeerOfTheDep ManagerOfSelectedDep 
@@ -42,12 +40,19 @@ namespace Vodovoz_test.ViewModel
             } 
         } //была ошибка со ссылкой на нул при переключении на отдел без менеджера, помогло удаление проверки Equals
 
+        public ObservableCollection<DepWithManagerName> AllDepWithManagerName
+        {
+            get { return _allDepWithManagerName; }
+            set { _allDepWithManagerName = value; OnPropertyChanged(); }
+        }
+        public SaveButtonStatus DepartmentSaveButtonStatus { get { return _employyerSaveButtonStatus; } set { if (!_firstName.Equals(value)) _employyerSaveButtonStatus = value; OnPropertyChanged(); } }
+
         #region Команды и их методы
-        public ICommand DeptSaveButtonCommand { get; }
-        public ICommand DepSelectedInDataGrid { get; }
-        public ICommand DepCancelButtonCommand { get; }
-        public ICommand DepRemoveManagerCommand { get; }
-        public ICommand DepRemoveCommand { get; }
+        public ICommand DeptSaveButtonCommand { get; private set; }
+        public ICommand DepSelectedInDataGrid { get; private set; }
+        public ICommand DepCancelButtonCommand { get; private set; }
+        public ICommand DepRemoveManagerCommand { get; private set; }
+        public ICommand DepRemoveCommand { get; private set; }
 
 
         private void OnDeptSaveButtonCommandExecuted(object p)
@@ -75,7 +80,7 @@ namespace Vodovoz_test.ViewModel
                 }
                 else _depManagerID = 0;
 
-                SaveButtonContent = "Изменить";
+                DepartmentSaveButtonStatus = SaveButtonStatus.Сохранить;
                 DepName = selectedDep.depName;
             }
         }
@@ -128,22 +133,22 @@ namespace Vodovoz_test.ViewModel
 
         private void SaveNewDep()
         {
-            DBcontext.Departments.Add(new Departments(_depName));
-            DBcontext.SaveChanges();
+            dbContext.Departments.Add(new Departments(_depName));
+            dbContext.SaveChanges();
 
-            AllDepWithManagerName = GetAllDepsWithManagerName();
+            DownloadDataForDepartmentsDataGrid();
             CancellProperties();
             MessageBox.Show("Депортамент создан");
         }
         private void UpdateDep()
         {
-            var entity = DBcontext.Departments.Find(selectedDepId);
+            var entity = dbContext.Departments.Find(selectedDepId);
             entity.depName = DepName;
             if (_depManagerID == 0 && ManagerOfSelectedDep != null) entity.managerID = _managerOfSelectedDep.empid;
-            DBcontext.SaveChanges();
+            dbContext.SaveChanges();
 
-            AllDepWithManagerName = GetAllDepsWithManagerName();
-            AllEmployeesWithDepName = GetEmployeersOfTheDep();
+            DownloadDataForDepartmentsDataGrid();
+            DownloadDataForEmploeersDataGrid();
             CancellProperties();
         }        
         private EmployeerOfTheDep GetManagerOfTheSelectedDep(int managerID)
@@ -157,22 +162,22 @@ namespace Vodovoz_test.ViewModel
         }
         private void RemoveManager()
         {
-            var dep = DBcontext.Departments.Find(selectedDepId);
+            var dep = dbContext.Departments.Find(selectedDepId);
             dep.managerID = null;
-            DBcontext.SaveChanges();
+            dbContext.SaveChanges();
 
             ManagerOfSelectedDep = null;
             CancellProperties();
-            AllDepWithManagerName = GetAllDepsWithManagerName();
-           // MessageBox.Show("Руководитель смещен");
+            DownloadDataForDepartmentsDataGrid();
+            // MessageBox.Show("Руководитель смещен");
         }
         private void RemoveDepartment()
         {
-            DBcontext.Departments.Remove(DBcontext.Departments.Find(selectedDepId));
-            DBcontext.SaveChanges();
+            dbContext.Departments.Remove(dbContext.Departments.Find(selectedDepId));
+            dbContext.SaveChanges();
 
-            AllDepWithManagerName = GetAllDepsWithManagerName();
-            AllEmployeesWithDepName = GetEmployeersOfTheDep();
+            DownloadDataForDepartmentsDataGrid();
+            DownloadDataForEmploeersDataGrid();
             CancellProperties();
 
             //MessageBox.Show("Отдел удолен");
@@ -183,7 +188,7 @@ namespace Vodovoz_test.ViewModel
             ManagerOfSelectedDep = null;
             AllEmpOfSelectedDep = null;
             selectedDepId = 0;
-            SaveButtonContent = "Сохранить";
+            DepartmentSaveButtonStatus = SaveButtonStatus.Изменить;
         }
 
         private bool CheckPropertiesBeforeCreateOrUpdate()
@@ -194,6 +199,31 @@ namespace Vodovoz_test.ViewModel
                 return false;
             }
             return true;
+        }
+
+        private void CreateDepartmentsTabComments()
+        {
+            DeptSaveButtonCommand = new LambdaCommand(OnDeptSaveButtonCommandExecuted, CanDeptSaveButtonCommandExecute);
+            DepSelectedInDataGrid = new LambdaCommand(OnDepSelectedInDataGridExecuted, CanDepSelectedInDataGridExecute);
+            DepCancelButtonCommand = new LambdaCommand(OnDepCancelButtonExecuted, CanDepCancelButtonExecute);
+            DepRemoveManagerCommand = new LambdaCommand(OnDepRemoveManagerCommandExecuted, CanDepRemoveManagerCommandExecute);
+            DepRemoveCommand = new LambdaCommand(OnDepRemoveCommandExecuted, CanDepRemoveCommandExecute);
+        }
+
+        private void DownloadDataForDepartmentsDataGrid()
+        {
+            var freshDepWithManagerNameList = new ObservableCollection<DepWithManagerName>();
+            //поскольку есть возможность создавать отделы без руководителя, то для получения всех отделов с фио руководителя (или без) нужно применить внешнее соединение left join, которе не поддерживается в LINQ. Поэтому идет прямой запрос в БД. 
+            string sqlcommand = "select D.depID, depName, managerID, case when managerID is not null then CONCAT(lastname, ' ', firstname, ' ', patronymic) else 'руководитель не назначен' end as managerfullname from Departments as D left join Employees as E on D.managerID = E.empid; ";
+
+            var result = dbContext.Database.SqlQuery(typeof(DepWithManagerName), sqlcommand);
+
+            foreach (var a in result)
+            {
+                freshDepWithManagerNameList.Add((DepWithManagerName)a);
+            }
+
+            AllDepWithManagerName = freshDepWithManagerNameList;
         }
 
     }

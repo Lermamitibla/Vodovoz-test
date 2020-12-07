@@ -4,11 +4,11 @@ using System.Windows;
 using System.Windows.Input;
 using Vodovoz_test.Commands;
 using Vodovoz_test.SupportingClasses;
-
+using System.Collections.ObjectModel;
 
 namespace Vodovoz_test.ViewModel
 {
-    class EmployeersVM : MainVM
+   partial class MainVM : BaseVM
     {
         private int empPrimaryKey;
         private string _firstName = String.Empty;
@@ -16,16 +16,19 @@ namespace Vodovoz_test.ViewModel
         private string _patroymic = String.Empty;
         private Gender _empGender;
         private DateTime _birthDate = new DateTime(1900, 01, 01);
-        private int _depID;
+        private int _emploeersDepartmentID;
         private DepWithManagerName _selectedDep;
         private EmployeerOfTheDep selectedEmp;
-        
+        private SaveButtonStatus _employyerSaveButtonStatus = SaveButtonStatus.Сохранить;
+
+        private ObservableCollection<EmployeerOfTheDep> _allEmployeesWithDepNam;
+
         public string FirstName { get { return _firstName; } set { if (!_firstName.Equals(value)) _firstName = value; OnPropertyChanged(); } }
         public string LastName { get { return _lastName; } set { if (!_lastName.Equals(value)) _lastName = value; OnPropertyChanged(); } }
         public string Patronymic { get { return _patroymic; } set { if (!_patroymic.Equals(value)) _patroymic = value; OnPropertyChanged(); } }
         public Gender EmpGender { get { return _empGender; } set { if (!_empGender.Equals(value)) _empGender = value; OnPropertyChanged(); } }
         public DateTime BirthDate { get { return _birthDate; } set { if (!_birthDate.Equals(value)) _birthDate = value; OnPropertyChanged();} }
-        public int DepID { get { return _depID; } set { if (!_depID.Equals(value)) _depID = value; OnPropertyChanged();} }
+        public int EmployeersDepID { get { return _emploeersDepartmentID; } set { if (!_emploeersDepartmentID.Equals(value)) _emploeersDepartmentID = value; OnPropertyChanged();} }
         public DepWithManagerName SelectedDept
         {
             get { return _selectedDep; }
@@ -33,21 +36,33 @@ namespace Vodovoz_test.ViewModel
             { 
                 _selectedDep = value;
                 OnPropertyChanged();
-                if (value != null) _depID = _selectedDep.depID;
-                else _depID = 0;
+                if (value != null) _emploeersDepartmentID = _selectedDep.depID;
+                else _emploeersDepartmentID = 0;
             }
         }
 
+        public ObservableCollection<EmployeerOfTheDep> AllEmployeesWithDepName
+        {
+            get { return _allEmployeesWithDepNam; }
+            set
+            {
+                if (!_allEmployeesWithDepNam.Equals(value)) _allEmployeesWithDepNam = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public SaveButtonStatus EmployyerSaveButtonStatus { get { return _employyerSaveButtonStatus; } set { if (!_firstName.Equals(value)) _employyerSaveButtonStatus = value; OnPropertyChanged(); } }
+
 
         #region Команды и их методы
-        public ICommand EmpSaveButtonCommand { get; }
-        public ICommand EmpSelectedInDataGrid { get; }
-        public ICommand CancelButtonCommand { get; }
-        public ICommand DeleteButtonCommand { get; }
+        public ICommand EmpSaveButtonCommand { get; private set; }
+        public ICommand EmpSelectedInDataGrid { get; private set; }
+        public ICommand CancelButtonCommand { get; private set; }
+        public ICommand DeleteButtonCommand { get; private set; }
 
         private void OnEmpSaveButtonCommandExecuted (object p)
         {
-            if (DepID == 0) MessageBox.Show("Необходимо указать отдел");
+            if (EmployeersDepID == 0) MessageBox.Show("Необходимо указать отдел");
             else
             {
                 if (empPrimaryKey == 0) SaveNewEmp();
@@ -67,7 +82,7 @@ namespace Vodovoz_test.ViewModel
                 Patronymic = selectedEmp.patronymic;
                 EmpGender = selectedEmp.gender;
                 BirthDate = selectedEmp.dateOfBirth;
-                SaveButtonContent = "Изменить";
+                EmployyerSaveButtonStatus = SaveButtonStatus.Изменить;
                 
                 foreach (var dep in _allDepWithManagerName)
                 {
@@ -85,10 +100,10 @@ namespace Vodovoz_test.ViewModel
 
         private void OnDeleteButtonExecuted (object p)
         {
-            DBcontext.Employees.Remove(DBcontext.Employees.Find(empPrimaryKey));
-            DBcontext.SaveChanges();
+            dbContext.Employees.Remove(dbContext.Employees.Find(empPrimaryKey));
+            dbContext.SaveChanges();
 
-            AllDepWithManagerName = GetAllDepsWithManagerName();
+            DownloadDataForDepartmentsDataGrid();
             UpdateLinkedResources();
             CancelProperties();
         }
@@ -126,30 +141,23 @@ namespace Vodovoz_test.ViewModel
         #endregion
 
 
-        public EmployeersVM()
-        {
-            EmpSaveButtonCommand = new LambdaCommand(OnEmpSaveButtonCommandExecuted, CanEmpSaveButtonCommandExecute);
-            EmpSelectedInDataGrid = new LambdaCommand(OnEmpSelectedInDataGridExecuted, CanEmpSelectedInDataGridExecute);
-            CancelButtonCommand = new LambdaCommand(OnCancelButtonExecuted, CanCancelButtonExecute);
-            DeleteButtonCommand = new LambdaCommand(OnDeleteButtonExecuted, CanDeleteButtonExecute);
-        }
         private void CancelProperties()
         {
             FirstName = LastName = Patronymic = String.Empty;
             empPrimaryKey = 0;
             SelectedDept = null;
             selectedEmp = null;
-            SaveButtonContent = "Сохранить";
+            EmployyerSaveButtonStatus = SaveButtonStatus.Сохранить;
         }
         private void SaveNewEmp()
         {
-            var newEmployee = new Employees(FirstName, LastName, Patronymic, EmpGender, BirthDate, DepID );
+            var newEmployee = new Employees(FirstName, LastName, Patronymic, EmpGender, BirthDate, EmployeersDepID );
 
             if (EmpGender == 0) MessageBox.Show("Нужно указать пол нового сотрудника");
             else
             {
-                DBcontext.Employees.Add(newEmployee);
-                DBcontext.SaveChanges();
+                dbContext.Employees.Add(newEmployee);
+                dbContext.SaveChanges();
 
                 UpdateLinkedResources();
                 CancelProperties();
@@ -157,23 +165,42 @@ namespace Vodovoz_test.ViewModel
         }
         private void UpdateEmp()
         {
-                var entity = DBcontext.Employees.Find(empPrimaryKey);
+                var entity = dbContext.Employees.Find(empPrimaryKey);
                 entity.firstname = FirstName;
                 entity.lastname = LastName;
                 entity.patronymic = Patronymic;
                 entity.gender = EmpGender;
                 entity.dateOfBirth = BirthDate;
-                entity.depID = DepID;
-                DBcontext.SaveChanges();
+                entity.depID = EmployeersDepID;
+                dbContext.SaveChanges();
 
-            AllDepWithManagerName = GetAllDepsWithManagerName();
+            DownloadDataForDepartmentsDataGrid();
             UpdateLinkedResources();
             CancelProperties();
         }
         private void UpdateLinkedResources()
         {
-            AllEmployeesWithDepName = GetEmployeersOfTheDep();
+            DownloadDataForEmploeersDataGrid();
             UpdateEmpListForSelectedDep();
+        }
+
+        private void CreateEmployeerTabCommands()
+        {
+            EmpSaveButtonCommand = new LambdaCommand(OnEmpSaveButtonCommandExecuted, CanEmpSaveButtonCommandExecute);
+            EmpSelectedInDataGrid = new LambdaCommand(OnEmpSelectedInDataGridExecuted, CanEmpSelectedInDataGridExecute);
+            CancelButtonCommand = new LambdaCommand(OnCancelButtonExecuted, CanCancelButtonExecute);
+            DeleteButtonCommand = new LambdaCommand(OnDeleteButtonExecuted, CanDeleteButtonExecute);
+        }
+
+        private void DownloadDataForEmploeersDataGrid()
+        {
+            var freshEmpList = new ObservableCollection<EmployeerOfTheDep>();
+            dynamic rawdata = LoadEmployeersOfTheDep();
+            foreach (var source in rawdata)
+            {
+                freshEmpList.Add(new EmployeerOfTheDep(source.empid, source.firstname, source.lastname, source.patronymic, source.gender, source.dateOfBirth, source.depID, source.depName, source.managerID));
+            }
+            AllEmployeesWithDepName = freshEmpList;
         }
 
     }

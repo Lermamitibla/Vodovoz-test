@@ -160,8 +160,8 @@
     <Compile Include="SupportingClasses\DepWithManagerName.cs" />
     <Compile Include="SupportingClasses\EmployeerOfTheDep.cs" />
     <Compile Include="SupportingClasses\EnumBindingSourceExtension.cs" />
-    <Compile Include="ViewModel\DepartmentsVM.cs" />
-    <Compile Include="ViewModel\EmployeersVM.cs" />
+    <Compile Include="ViewModel\MainVM_Departments.cs" />
+    <Compile Include="ViewModel\MainVM_Employeers.cs" />
     <Compile Include="ViewModel\BaseVM.cs" />
     <Compile Include="Model\Model1.Context.cs">
       <AutoGen>True</AutoGen>

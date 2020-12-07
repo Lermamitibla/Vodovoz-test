@@ -14,7 +14,7 @@
             
             <TabItem Header="Сотрудники">
                 <TabItem.DataContext>
-                    <vm:EmployeersVM/>
+                    <vm:MainVM/>
                 </TabItem.DataContext>
                 <Grid Background="#FFE5E5E5" Margin="-1,-1,-11,-15">
                     <Label Content="Имя" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,32,0,0" Width="99" Height="29"/>
@@ -57,7 +57,7 @@
         
             <TabItem Header="Подразделения" Margin="0,0,-4,-2" >
                 <TabItem.DataContext>
-                    <vm:DepartmentsVM/>
+                    <vm:MainVM/>
                 </TabItem.DataContext>
                 <Grid Background="#FFE5E5E5" Margin="0,-25,-13,-10">
                     <Label Content="Подразделение" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="17,59,0,0" Width="99" Height="29"/>
